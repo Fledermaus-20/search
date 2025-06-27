@@ -17,7 +17,7 @@ export const bangs = [
     s: "Perplexity",
     sc: "Perplexity",
     t: "ppx",
-    u: "https://www.perplexity.ai/search/new?focus=internet&q={{s}}}",
+    u: "https://www.perplexity.ai/search/new?focus=internet&q={{{s}}}",
   },
   {
     c: "Tech",
