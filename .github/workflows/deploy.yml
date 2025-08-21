@@ -45,10 +45,34 @@ jobs:
       - name: Add SPA fallback (404.html)
         run: cp dist/index.html dist/404.html
 
-      - name: Configure GitHub Pages
+      - name: Configure GitHub Pages (best effort)
         uses: actions/configure-pages@v5
+        continue-on-error: true
         with:
           enablement: true
+
+      - name: Ensure Pages site exists (optional via PAT)
+        if: ${{ secrets.GH_PAT_PAGES != '' }}
+        env:
+          GH_PAT_PAGES: ${{ secrets.GH_PAT_PAGES }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          echo "Checking if Pages site exists..."
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: token ${GH_PAT_PAGES}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${REPO}/pages")
+          if [ "$status" = "404" ]; then
+            echo "Creating Pages site via REST API..."
+            curl -sfL -X POST \
+              -H "Authorization: token ${GH_PAT_PAGES}" \
+              -H "Accept: application/vnd.github+json" \
+              -d '{"build_type":"workflow"}' \
+              "https://api.github.com/repos/${REPO}/pages"
+          else
+            echo "Pages site already exists (status ${status})."
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
